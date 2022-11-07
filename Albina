@@ -1,3 +1,34 @@
-import numpy as np
+import random
+answers = ['Бесспорно', 'Мне кажется - да', 'Пока не ясно, попробуй снова', 'Даже не думай', 'Предрешено', 'Вероятнее всего', 'Спроси позже', 'Мой ответ - нет', 'Никаких сомнений',
+'Хорошие перспективы', 'Лучше не рассказывать', 'По моим данным - нет', 'Определённо да', 'Знаки говорят - да', 'Сейчас нельзя предсказывать', 'Перспективы не очень хорошие',
+'Можешь быть уверен в этом', 'Да', 'Сконцентрируйся и спроси опять', 'Весьма сомнительно']
 
-a = np.array([1, 2, 3])
+print('Привет, мир! Я магический шар и я знаю ответ на любой вопрос.')
+
+name = input('Как тебя зовут?')
+print('привет', name)
+
+again = 'д'
+
+while again.lower() == 'д':
+   question = input('Задай мне вопрос: ')
+   print(random.choice(answers())
+   again = input('Задать еще один вопрос? ( д = да, н = нет): ')
+   
+   if not again.lower() == 'д':
+     print('Возвращайся еще')
+     
+     
+ #необычный пароль: а - палиндром, б - простое число, с - четное:
+def is_valid_password(password):
+    password = password.split(':')
+    a, b, c = password[0], int(password[1]), int(password[2])
+    if len(password) != 3 or a != a[::-1] or c % 2 != 0:
+        return False
+    for i in range(2, b):
+        if b % i == 0:
+            return False
+    return True   
+    
+psw = input()
+print(is_valid_password(psw))
