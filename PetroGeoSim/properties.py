@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import TextIO
 
 import numpy as np
+import copy
 
 from PetroGeoSim.distributions import Distribution
 from PetroGeoSim.utils.equation_parser import evaluate
@@ -50,13 +51,18 @@ class Property:
         "distribution",
         "equation",
         "values",
-        "stats"
+        "stats",
+        "probability",
+        "values_probability",
+        "probability_stats",
     )
 
     def __init__(
         self,
         name: str,
         variable: str,
+        probability: float,
+        probability_stats: dict,
         distribution: str | None = None,
         equation: str | None = None,
         **kwargs
@@ -67,6 +73,16 @@ class Property:
         self.equation = None
         self.values = 0
         self.stats = {}
+        self.probability_stats = {}
+        if probability:
+            self.probability = float(probability)
+        else:
+            self.probability = 0
+        if probability_stats:
+            self.probability_stats = probability_stats
+        else:
+            self.probability_stats = 0
+        self.values_probability = 0
 
         if distribution:
             self.prop_type = "input"
@@ -91,7 +107,8 @@ class Property:
         return (
             f"{self.prop_type.upper()} PROPERTY {self.name}\n"
             f"* {attr}: \n{math}\n"
-            f"* Stats: {self.stats}"
+            f"* Stats: {self.stats}\n"
+            f"* probability: {self.probability}"
         )
 
     def __eq__(self, other) -> bool:
@@ -256,6 +273,17 @@ class Property:
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
 
+    # stats for unrisked stats with probability
+    def calculate_stats2(self) -> None:
+        if self.probability:
+            percents = ((10, 50, 90), ("P10", "P50", "P90"))
+            percentiles = np.percentile(
+                self.values_probability, percents[0], method="median_unbiased"
+            )
+            setattr(self, 'probability_stats', dict(zip(percents[1], percentiles)))
+            self.probability_stats["Mean"] = np.mean(self.values_probability)
+            self.probability_stats["Std"] = np.std(self.values_probability)
+
     def run_calculation(self, **calc_kwargs) -> dict[str, float]:
         """Starts the sampling of distribution or evaluation of string equation.
 
@@ -273,10 +301,25 @@ class Property:
         if self.prop_type == "input":
             self.values = self.distribution(**calc_kwargs)
         if self.prop_type == "result":
+            # print('properties run_calculation',str(calc_kwargs))
+            # {'s': array([898.06837933, ..., 589.89971388,]),
+            # 'hef': array([41.18417646, ..., 46.21017594]),
+            # 'poro': array([0.36976062, ..., 0.14981853]),
+            # 'sw': array([0.96137108, ..., 0.10892003]),
+            # 'fvf': array([1.06702949 ..., 0.22020752])}
             self.values = self._evaluate_equation(**calc_kwargs)
+            percentile = self.probability * 100
+            prop_value_list = copy.deepcopy(self.values)
+            if 0 < percentile < 100:
+                #threshold = np.percentile(prop_value_list, percentile)
+                threshold = np.percentile(prop_value_list, percentile)
+                prop_value_list[prop_value_list > threshold] = 0
+            else:
+                raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
+            self.values_probability = prop_value_list
 
         self.calculate_stats()
-
+        #self.calculate_stats2()
         return self.stats
 
     def update(self, **update_kwargs: dict) -> None:
@@ -384,7 +427,9 @@ class Property:
         name = serial_dict.pop("name", "property")
         var = serial_dict.pop("variable", name.lower())
         eq = serial_dict.pop("equation", None)
-        prop = cls(name, var, distribution=distr, equation=eq)
+        prob = serial_dict.pop("probability", None)
+        stats_prob = serial_dict.pop("probability_stats", None)
+        prop = cls(name, var, distribution=distr, equation=eq, probability=prob, probability_stats=stats_prob)
         for slot, value in serial_dict.items():
             setattr(prop, slot, value)
 

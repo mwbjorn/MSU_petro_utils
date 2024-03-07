@@ -43,7 +43,7 @@ class Region:
         _description_
     """
 
-    __slots__ = ("name", "composition", "inputs", "results")
+    __slots__ = ("name", "composition", "inputs", "results", "probability")
 
     def __init__(
         self,
@@ -54,13 +54,15 @@ class Region:
         self.composition = composition
         self.inputs = {}
         self.results = {}
+        self.probability = None
 
     def __str__(self) -> str:
         return (
             f"REGION {self.name}\n"
             f"* Composition: {self.composition}\n"
             f"* Inputs: {', '.join(self.inputs.keys())}\n"
-            f"* Results: {', '.join(self.results.keys())}"
+            f"* Results: {', '.join(self.results.keys())}\n"
+            f"* Probability Reg: {self.probability}"
         )
 
     def __eq__(self, other) -> bool:
@@ -140,11 +142,15 @@ class Region:
                 all_properties = self.results
             case _:
                 raise ValueError("Invalid value encountered in `include`")
-
         for prop in all_properties.values():
             if hasattr(prop, attribute):
                 key = prop.name if not variable_key else prop.variable
                 attributes[key] = getattr(prop, attribute)
+                if prop.prop_type == 'result':
+                    if prop.probability:
+                        attributes['values_probability'] = prop.values_probability
+                    if prop.probability_stats:
+                        attributes['probability_stats'] = prop.probability_stats
 
         return attributes
 
@@ -269,6 +275,9 @@ class Region:
         name = serial_dict.pop("name", "region")
         reg = cls(name)
         for slot, value in serial_dict.items():
+            #1 Compmosition
+            #2 inputs
+            #3 results
             setattr(reg, slot, value)
 
         return reg
