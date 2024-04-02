@@ -317,9 +317,8 @@ class Property:
             else:
                 raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
             self.values_probability = prop_value_list
-
+            self.calculate_stats2()
         self.calculate_stats()
-        #self.calculate_stats2()
         return self.stats
 
     def update(self, **update_kwargs: dict) -> None:
