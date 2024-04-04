@@ -310,7 +310,7 @@ class Property:
             self.values = self._evaluate_equation(**calc_kwargs)
             percentile = self.probability * 100
             prop_value_list = copy.deepcopy(self.values)
-            if 0 < percentile < 100:
+            if 0 < percentile <= 100:
                 #threshold = np.percentile(prop_value_list, percentile)
                 threshold = np.percentile(prop_value_list, percentile)
                 prop_value_list[prop_value_list > threshold] = 0
