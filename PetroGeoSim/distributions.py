@@ -48,7 +48,7 @@ class Distribution:
         Change the photo's gamma exposure.
     """
 
-    __slots__ = ("name", "num_samples", "seed", "rng", "function", "params")
+    __slots__ = ("name", "num_samples", "seed", "rng", "function", "params", "distribution")
 
     SCIPY_NAMES = {
         "uniform": uniform,
@@ -66,6 +66,7 @@ class Distribution:
         self.rng = default_rng(self.seed)
         self.function = self._init_func()
         self.params = kwargs
+        self.distribution = []
 
     def __str__(self) -> str:
         return (
@@ -83,8 +84,12 @@ class Distribution:
             random_state=self.rng,
             **scipy_params
         )
+        self.distribution = values
 
         return values
+
+    def get_distribution(self) -> str:
+        return self.distribution
 
     def _init_func(self):
         """Initializes the function from the `self.name`.

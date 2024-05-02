@@ -77,11 +77,11 @@ class Property:
         if probability:
             self.probability = float(probability)
         else:
-            self.probability = 0
+            self.probability = 0.0
         if probability_stats:
             self.probability_stats = probability_stats
         else:
-            self.probability_stats = 0
+            self.probability_stats = {}
         self.values_probability = 0
 
         if distribution:
@@ -272,17 +272,23 @@ class Property:
 
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
+        if self.distribution:
+            self.stats["distribution_min"] = np.min(self.distribution)
+            self.stats["distribution_max"] = np.max(self.distribution)
 
     # stats for unrisked stats with probability
     def calculate_stats2(self) -> None:
-        if self.probability:
-            percents = ((10, 50, 90), ("P10", "P50", "P90"))
-            percentiles = np.percentile(
-                self.values_probability, percents[0], method="median_unbiased"
-            )
-            setattr(self, 'probability_stats', dict(zip(percents[1], percentiles)))
-            self.probability_stats["Mean"] = np.mean(self.values_probability)
-            self.probability_stats["Std"] = np.std(self.values_probability)
+        percents = ((10, 50, 90), ("P10", "P50", "P90"))
+        percentiles = np.percentile(
+            self.values_probability, percents[0], method="median_unbiased"
+        )
+        self.probability_stats.update(dict(zip(percents[1], percentiles)))
+        self.probability_stats["Mean"] = np.mean(self.values_probability)
+        self.probability_stats["Std"] = np.std(self.values_probability)
+        
+        if self.distribution:
+            self.probability_stats["distribution_min"] = np.min(self.distribution)
+            self.probability_stats["distribution_max"] = np.max(self.distribution)
 
     def run_calculation(self, **calc_kwargs) -> dict[str, float]:
         """Starts the sampling of distribution or evaluation of string equation.
@@ -310,7 +316,7 @@ class Property:
             self.values = self._evaluate_equation(**calc_kwargs)
             percentile = self.probability * 100
             prop_value_list = copy.deepcopy(self.values)
-            if 0 < percentile <= 100:
+            if 0.0 <= percentile <= 100.0:
                 #threshold = np.percentile(prop_value_list, percentile)
                 threshold = np.percentile(prop_value_list, percentile)
                 prop_value_list[prop_value_list > threshold] = 0
