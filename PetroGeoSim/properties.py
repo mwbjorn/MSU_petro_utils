@@ -8,7 +8,7 @@ import copy
 
 from PetroGeoSim.distributions import Distribution
 from PetroGeoSim.utils.equation_parser import evaluate
-
+from scipy.stats import bernoulli
 
 class Property:
     """Class handles operations on `Model`s inputs and results.
@@ -317,9 +317,8 @@ class Property:
             percentile = self.probability * 100
             prop_value_list = copy.deepcopy(self.values)
             if 0.0 <= percentile <= 100.0:
-                #threshold = np.percentile(prop_value_list, percentile)
-                threshold = np.percentile(prop_value_list, percentile)
-                prop_value_list[prop_value_list > threshold] = 0
+                indic = bernoulli.rvs(self.probability, size=len(prop_value_list))
+                prop_value_list = prop_value_list * indic
             else:
                 raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
             self.values_probability = prop_value_list
