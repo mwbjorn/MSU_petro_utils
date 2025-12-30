@@ -38,16 +38,17 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
                     },
                     "distribution": initial_distribution[reg][prop].get_distribution().tolist() if initial_distribution[reg][prop] else []
                 }
-        final_result[reg]["result_probability"] = {
-            "values": vals_probability.tolist(),
-             "stats": {
-                    "P90": (initial_stats[reg]["probability_stats"]["P10"], 90),
-                    "P50": (initial_stats[reg]["probability_stats"]["P50"], 50),
-                    "P10": (initial_stats[reg]["probability_stats"]["P90"], 10),
-                    "Mean": (initial_stats[reg]["probability_stats"]["Mean"]),
-                    "Std": (initial_stats[reg]["probability_stats"]["Std"]),
-                },
-        }
+                if prop in model.regions[reg].results:
+                    final_result[reg][prop + "_result_probability"] = {
+                        "values": vals_probability.tolist(),
+                        "stats": {
+                            "P90": (initial_stats[reg]["probability_stats"]["P10"], 90),
+                            "P50": (initial_stats[reg]["probability_stats"]["P50"], 50),
+                            "P10": (initial_stats[reg]["probability_stats"]["P90"], 10),
+                            "Mean": (initial_stats[reg]["probability_stats"]["Mean"]),
+                            "Std": (initial_stats[reg]["probability_stats"]["Std"]),
+                        },
+                    }
 
 
     return dict(final_result)
