@@ -133,6 +133,8 @@ class Region:
         """
 
         attributes = {}
+        values_probability_dict = {}
+        probability_stats_dict = {}
         match include:
             case ["inputs", "results"] | ["results", "inputs"]:
                 all_properties = {**self.inputs, **self.results}
@@ -148,9 +150,13 @@ class Region:
                 attributes[key] = getattr(prop, attribute)
                 if prop.prop_type == 'result':
                     if prop.probability:
-                        attributes['values_probability'] = prop.values_probability
+                        values_probability_dict[key + "_probability"] = prop.values_probability
                     if prop.probability_stats:
-                        attributes['probability_stats'] = prop.probability_stats
+                        probability_stats_dict["probability_stats"] = prop.probability_stats
+        if values_probability_dict:
+            attributes.update(values_probability_dict)
+        if probability_stats_dict:
+            attributes.update(probability_stats_dict)
 
         return attributes
 
@@ -260,17 +266,14 @@ class Region:
             inited_prop = Property.deserialize(prop, **kwargs)
             inited_prop.run_calculation()
             serial_dict["inputs"][prop_name] = inited_prop
-        # Results deserialization and calculation loop
+        input_values = {
+            prop.variable: prop.values 
+            for prop in serial_dict["inputs"].values()
+        }
         for prop_name, prop in serial_dict["results"].items():
             prop["name"] = prop_name
-            if "probability" not in prop:
-                prop["probability"] = region_probability
             inited_prop = Property.deserialize(prop)
-            inited_prop.run_calculation(
-                **{prop.variable: prop.values
-                   for prop in serial_dict["inputs"].values()
-                   }
-            )
+            inited_prop.run_calculation(**input_values)
             serial_dict["results"][prop_name] = inited_prop
 
         # Region object creation
@@ -281,7 +284,7 @@ class Region:
             #2 inputs
             #3 results
             setattr(reg, slot, value)
-        reg.probability = region_probability
+        #reg.probability = region_probability
         return reg
 
     @classmethod

@@ -327,15 +327,17 @@ class Property:
             # 'sw': array([0.96137108, ..., 0.10892003]),
             # 'fvf': array([1.06702949 ..., 0.22020752])}
             self.values = self._evaluate_equation(**calc_kwargs)
-            percentile = self.probability * 100
-            prop_value_list = copy.deepcopy(self.values)
-            if 0.0 <= percentile <= 100.0:
-                indic = bernoulli.rvs(self.probability, size=len(prop_value_list))
-                prop_value_list = prop_value_list * indic
-            else:
-                raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
-            self.values_probability = prop_value_list
-            self.calculate_stats2()
+            if self.probability and self.probability > 0:
+                percentile = self.probability * 100
+                prop_value_list = copy.deepcopy(self.values)
+                if 0.0 <= percentile <= 100.0:
+                    np.random.seed(None)
+                    indic = bernoulli.rvs(self.probability, size=len(prop_value_list))
+                    prop_value_list = prop_value_list * indic
+                else:
+                    raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
+                self.values_probability = prop_value_list
+                self.calculate_stats2()
         self.calculate_stats()
         return self.stats
 
