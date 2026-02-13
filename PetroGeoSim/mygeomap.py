@@ -32,6 +32,7 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
                         "P10": (initial_stats[reg][prop]["P90"], 10),
                         "Mean": (initial_stats[reg][prop]["Mean"]),
                         "Std": (initial_stats[reg][prop]["Std"]),
+                        "all": initial_stats[reg][prop].get("all", {}),
                         "distribution_min": dmin,
                         "distribution_max": dmax,
                         
@@ -47,6 +48,7 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
                             "P10": (initial_stats[reg]["probability_stats"]["P90"], 10),
                             "Mean": (initial_stats[reg]["probability_stats"]["Mean"]),
                             "Std": (initial_stats[reg]["probability_stats"]["Std"]),
+                            "all": initial_stats[reg]["probability_stats"].get("all", {}),
                         },
                     }
 

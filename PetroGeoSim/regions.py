@@ -263,6 +263,8 @@ class Region:
         # Results deserialization and calculation loop
         for prop_name, prop in serial_dict["results"].items():
             prop["name"] = prop_name
+            if "probability" not in prop:
+                prop["probability"] = region_probability
             inited_prop = Property.deserialize(prop)
             inited_prop.run_calculation(
                 **{prop.variable: prop.values
@@ -279,7 +281,7 @@ class Region:
             #2 inputs
             #3 results
             setattr(reg, slot, value)
-
+        reg.probability = region_probability
         return reg
 
     @classmethod

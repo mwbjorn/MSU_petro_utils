@@ -265,10 +265,16 @@ class Property:
         """
 
         percents = ((10, 50, 90), ("P10", "P50", "P90"))
-        percentiles = np.percentile(
-            self.values, percents[0], method="median_unbiased"
-        )
+        percentiles = np.percentile(self.values, percents[0], method="median_unbiased")
         self.stats.update(dict(zip(percents[1], percentiles)))
+
+        # percentile all
+        all_percents = list(range(0, 101))
+        all_percentiles = np.percentile(self.values, all_percents, method="median_unbiased")
+        all_percentiles_dict = {}
+        for p, value in zip(all_percents, all_percentiles):
+            all_percentiles_dict[str(p)] = float(value)
+        self.stats["all"] = all_percentiles_dict
 
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
@@ -279,10 +285,17 @@ class Property:
     # stats for unrisked stats with probability
     def calculate_stats2(self) -> None:
         percents = ((10, 50, 90), ("P10", "P50", "P90"))
-        percentiles = np.percentile(
-            self.values_probability, percents[0], method="median_unbiased"
-        )
+        percentiles = np.percentile(self.values_probability, percents[0], method="median_unbiased")
         self.probability_stats.update(dict(zip(percents[1], percentiles)))
+
+        # percentile all
+        all_percents = list(range(0, 101))
+        all_percentiles = np.percentile(self.values_probability, all_percents, method="median_unbiased")
+        all_percentiles_dict = {}
+        for p, value in zip(all_percents, all_percentiles):
+            all_percentiles_dict[str(p)] = float(value)
+        self.probability_stats["all"] = all_percentiles_dict
+
         self.probability_stats["Mean"] = np.mean(self.values_probability)
         self.probability_stats["Std"] = np.std(self.values_probability)
         
