@@ -265,10 +265,16 @@ class Property:
         """
 
         percents = ((10, 50, 90), ("P10", "P50", "P90"))
-        percentiles = np.percentile(
-            self.values, percents[0], method="median_unbiased"
-        )
+        percentiles = np.percentile(self.values, percents[0], method="median_unbiased")
         self.stats.update(dict(zip(percents[1], percentiles)))
+
+        # percentile all
+        all_percents = list(range(0, 101))
+        all_percentiles = np.percentile(self.values, all_percents, method="median_unbiased")
+        all_percentiles_dict = {}
+        for p, value in zip(all_percents, all_percentiles):
+            all_percentiles_dict[str(p)] = float(value)
+        self.stats["all"] = all_percentiles_dict
 
         self.stats["Mean"] = np.mean(self.values)
         self.stats["Std"] = np.std(self.values)
@@ -279,10 +285,17 @@ class Property:
     # stats for unrisked stats with probability
     def calculate_stats2(self) -> None:
         percents = ((10, 50, 90), ("P10", "P50", "P90"))
-        percentiles = np.percentile(
-            self.values_probability, percents[0], method="median_unbiased"
-        )
+        percentiles = np.percentile(self.values_probability, percents[0], method="median_unbiased")
         self.probability_stats.update(dict(zip(percents[1], percentiles)))
+
+        # percentile all
+        all_percents = list(range(0, 101))
+        all_percentiles = np.percentile(self.values_probability, all_percents, method="median_unbiased")
+        all_percentiles_dict = {}
+        for p, value in zip(all_percents, all_percentiles):
+            all_percentiles_dict[str(p)] = float(value)
+        self.probability_stats["all"] = all_percentiles_dict
+
         self.probability_stats["Mean"] = np.mean(self.values_probability)
         self.probability_stats["Std"] = np.std(self.values_probability)
         
@@ -314,15 +327,17 @@ class Property:
             # 'sw': array([0.96137108, ..., 0.10892003]),
             # 'fvf': array([1.06702949 ..., 0.22020752])}
             self.values = self._evaluate_equation(**calc_kwargs)
-            percentile = self.probability * 100
-            prop_value_list = copy.deepcopy(self.values)
-            if 0.0 <= percentile <= 100.0:
-                indic = bernoulli.rvs(self.probability, size=len(prop_value_list))
-                prop_value_list = prop_value_list * indic
-            else:
-                raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
-            self.values_probability = prop_value_list
-            self.calculate_stats2()
+            if self.probability and self.probability > 0:
+                percentile = self.probability * 100
+                prop_value_list = copy.deepcopy(self.values)
+                if 0.0 <= percentile <= 100.0:
+                    np.random.seed(None)
+                    indic = bernoulli.rvs(self.probability, size=len(prop_value_list))
+                    prop_value_list = prop_value_list * indic
+                else:
+                    raise ValueError("Invalid range of probability in `region deserialize`. Expected 0.0-1.0, got ", self.probability)
+                self.values_probability = prop_value_list
+                self.calculate_stats2()
         self.calculate_stats()
         return self.stats
 
