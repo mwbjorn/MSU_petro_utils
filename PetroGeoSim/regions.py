@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import Any, TextIO
 
 from numpy.random import SeedSequence
-
+import numpy as np
 from PetroGeoSim.properties import Property
 
 
@@ -133,8 +133,7 @@ class Region:
         """
 
         attributes = {}
-        values_probability_dict = {}
-        probability_stats_dict = {}
+        
         match include:
             case ["inputs", "results"] | ["results", "inputs"]:
                 all_properties = {**self.inputs, **self.results}
@@ -144,19 +143,19 @@ class Region:
                 all_properties = self.results
             case _:
                 raise ValueError("Invalid value encountered in `include`")
+                
         for prop in all_properties.values():
             if hasattr(prop, attribute):
                 key = prop.name if not variable_key else prop.variable
                 attributes[key] = getattr(prop, attribute)
+                
+                # Для результатов добавляем их вероятностные данные с уникальными ключами
                 if prop.prop_type == 'result':
-                    if prop.probability:
-                        values_probability_dict[key + "_probability"] = prop.values_probability
-                    if prop.probability_stats:
-                        probability_stats_dict["probability_stats"] = prop.probability_stats
-        if values_probability_dict:
-            attributes.update(values_probability_dict)
-        if probability_stats_dict:
-            attributes.update(probability_stats_dict)
+                    if hasattr(prop, 'values_probability') and prop.values_probability is not None:
+                        if isinstance(prop.values_probability, np.ndarray) and prop.values_probability.size > 0:
+                            attributes[key + '_probability_values'] = prop.values_probability
+                    if hasattr(prop, 'probability_stats') and prop.probability_stats:
+                        attributes[key + '_probability_stats'] = prop.probability_stats
 
         return attributes
 
