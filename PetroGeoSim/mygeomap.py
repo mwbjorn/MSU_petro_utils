@@ -30,9 +30,9 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
             final_result[reg][prop] = {
                 "values": vals.tolist(),
                 "stats": {
-                    "P90": (initial_stats[reg][prop]["P90"], 90),
+                    "P90": (initial_stats[reg][prop]["P10"], 90),
                     "P50": (initial_stats[reg][prop]["P50"], 50),
-                    "P10": (initial_stats[reg][prop]["P10"], 10),
+                    "P10": (initial_stats[reg][prop]["P90"], 10),
                     "Mean": (initial_stats[reg][prop]["Mean"]),
                     "Std": (initial_stats[reg][prop]["Std"]),
                     "all": initial_stats[reg][prop].get("all", {}),
@@ -57,9 +57,9 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
                         final_result[reg][base_prop + "_result_probability"] = {
                             "values": vals_probability.tolist(),
                             "stats": {
-                                "P90": (prob_stats["P90"], 90),
+                                "P90": (prob_stats["P90"], 10),
                                 "P50": (prob_stats["P50"], 50),
-                                "P10": (prob_stats["P10"], 10),
+                                "P10": (prob_stats["P10"], 90),
                                 "Mean": (prob_stats["Mean"]),
                                 "Std": (prob_stats["Std"]),
                                 "all": prob_stats.get("all", {}),
