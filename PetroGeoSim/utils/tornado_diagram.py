@@ -313,9 +313,14 @@ def calculate_tornado_for_formula(model: Model, formula: str, formula_name: str 
                     low_impact = low_result - base_result
                     high_impact = high_result - base_result
                     impact_range = abs(high_impact - low_impact)
+                    if low_impact < 0:
+                        # увеличивает результат
+                        high_impact, low_impact = high_impact, low_impact
+                        #positive_color = "#51cf66"  # зеленый
+                        #negative_color = "#ff6b6b"  # красный
                     
                     tornado_data.append({
-                        "variable": display_name,  # Используем отображаемое имя
+                        "variable": display_name,
                         "variable_code": code_name,
                         "base_value": float(base_value),
                         "low_value": float(low_value),
@@ -327,7 +332,9 @@ def calculate_tornado_for_formula(model: Model, formula: str, formula_name: str 
                         "high_impact": float(high_impact),
                         "impact_range": float(impact_range),
                         "unit": "",
-                        "description": display_name
+                        "description": display_name,
+                        "p10_value": float(low_value),   # low_value P10
+                        "p90_value": float(high_value)   # high_value P90
                     })
                     logger.info(f" Add data for {display_name}, impact_range={impact_range}")
                 else:
@@ -344,34 +351,63 @@ def calculate_tornado_for_formula(model: Model, formula: str, formula_name: str 
         logger.info(f"OK. {len(tornado_data)} variables")
         
         # Сортируем по диапазону влияния
-        tornado_data.sort(key=lambda x: x["impact_range"], reverse=True)
+        tornado_data.sort(key=lambda x: x["impact_range"])#, reverse=True)
         
         # Создаем данные для Plotly
         variables = [item["variable"] for item in tornado_data]
-        low_deviations = [item["low_result"] - base_result for item in tornado_data]
-        high_deviations = [item["high_result"] - base_result for item in tornado_data]
+        #low_deviations = [item["low_result"] - base_result for item in tornado_data]
+        #high_deviations = [item["high_result"] - base_result for item in tornado_data]
+        low_deviations = []
+        high_deviations = []
+        low_texts = []
+        high_texts = []
+        low_colors = []
+        high_colors = []
+        for item in tornado_data:
+            low_impact = item["low_impact"]
+            high_impact = item["high_impact"]
+            
+            # Изменение логики цвета. Обратно зависимые части формул тоже вправо зеленым
+            if low_impact > 0:
+                # зеленым
+                low_deviations.append(low_impact)
+                high_deviations.append(high_impact)
+                low_colors.append("#51cf66")
+                high_colors.append("#ff6b6b")
+                low_texts.append(f"{item['low_result']:.2f}")
+                high_texts.append(f"{item['high_result']:.2f}")
+            else:
+                # красным
+                low_deviations.append(low_impact)
+                high_deviations.append(high_impact)
+                low_colors.append("#ff6b6b")
+                high_colors.append("#51cf66")
+                low_texts.append(f"{item['high_result']:.2f}")
+                high_texts.append(f"{item['low_result']:.2f}")
         
         plotly_data = {
             "data": [
                 {
                     "y": variables,
                     "x": low_deviations,
-                    "name": f"Low ({low_quantile})",
+                    "name": f"Уменьшение", #f"Low ({low_quantile})", #
                     "orientation": "h",
-                    "marker": {"color": "#ff6b6b", "opacity": 0.7},
+                    "marker": {"color": low_colors, "opacity": 0.7},
                     "type": "bar",
-                    "text": [f"{item['low_result']:.2f}" for item in tornado_data],
+                    #"text": [f"{item['low_result']:.2f}" for item in tornado_data],
+                    "text": low_texts,
                     "textposition": "outside",
                     "width": 0.4
                 },
                 {
                     "y": variables,
                     "x": high_deviations,
-                    "name": f"High ({high_quantile})",
+                    "name": f"Увеличение", #f"High ({high_quantile})",
                     "orientation": "h",
-                    "marker": {"color": "#51cf66", "opacity": 0.7},
+                    "marker": {"color": high_colors, "opacity": 0.7},
                     "type": "bar",
-                    "text": [f"{item['high_result']:.2f}" for item in tornado_data],
+                    #"text": [f"{item['high_result']:.2f}" for item in tornado_data],
+                    "text": high_texts,
                     "textposition": "outside",
                     "width": 0.4
                 }
