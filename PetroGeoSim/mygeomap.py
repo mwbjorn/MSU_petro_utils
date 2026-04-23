@@ -94,4 +94,7 @@ def send_mygeomap(model: Model) -> dict[str, dict]:
 def receive_mygeomap(setup_config: dict[str, dict]) -> "Model":
     if "config" in setup_config:
         setup_config["regions"] = setup_config.pop("config")
+    # Удаляем tornado_config если он есть, чтобы не передавать в Model
+    if "tornado_config" in setup_config:
+        del setup_config["tornado_config"]
     return Model.deserialize(setup_config)
